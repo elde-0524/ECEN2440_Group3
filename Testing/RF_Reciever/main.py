@@ -1,4 +1,4 @@
-from machine import Pin
+`from machine import Pin
 import time 
 import utime
 
@@ -20,7 +20,7 @@ led3.value(0)
 led4.value(0)
 
 def ir_callback(pin):
-    
+
     global last_time
     now = utime.ticks_ms()
     if utime.ticks_diff(now, last_time) < 100:  # ignore within 200 ms
@@ -60,4 +60,4 @@ signal4.irq(trigger=Pin.IRQ_RISING, handler=ir_callback)
 
 
 while True:
-    time.sleep(0.1)  
+    time.sleep(0.1)  `

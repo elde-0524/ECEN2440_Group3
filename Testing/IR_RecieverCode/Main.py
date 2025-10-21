@@ -24,10 +24,10 @@ def ir_callback(data, addr, _):
         print("Unknown command")
 
 # Setup the IR receiver
-ir_pin = Pin(15, Pin.IN, Pin.PULL_UP)  # adjust pin if needed
+ir_pin = Pin(11, Pin.IN, Pin.PULL_UP)  # adjust pin if needed
 ir_receiver = NEC_8(ir_pin, callback=ir_callback)
 ir_receiver.error_function(print_error)
 
 # Main loop: just keep running
 while True:
-    time.sleep(1)
+    time.sleep(0.5)
