@@ -4,6 +4,7 @@ import utime
 
 from ir_rx.nec import NEC_8  # Use the NEC 8-bit class
 from ir_rx.print_error import print_error  # for debugging
+from machine import I2C
 
 
 # Example IR command values (you’ll need to print them from your remote first)
