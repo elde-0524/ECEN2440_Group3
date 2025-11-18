@@ -6,15 +6,14 @@ from machine import I2C, Pin
 import seesaw
 import time
 
-import ir_tx
 from ir_tx.nec import NEC
 
 
 # Initialize I2C. Adjust pin numbers based on your Pico's configuration
-i2c = I2C(0, scl=Pin(3), sda=Pin(2))
+i2c = I2C(1, scl=Pin(15), sda=Pin(14))
 
 #setting up transmitter 
-tx_pin = Pin(15, Pin.OUT, value = 0)  # Transmitter connected to GPIO15
+tx_pin = Pin(16, Pin.OUT, value = 0)  # Transmitter connected to GPIO15
 device_addr = 0x01
 transmitter = NEC(tx_pin)
 
@@ -22,6 +21,7 @@ FORWARD = 0x18
 BACKWARD = 0x17
 LEFT = 0x16
 RIGHT = 0x15
+STOP = 0x14
 
 
 commands = [FORWARD, BACKWARD, LEFT, RIGHT]
@@ -73,20 +73,27 @@ def main():
         current_x, current_y = read_joystick()
 
         # Check if button state has changed
-        if current_buttons != last_buttons:
-            if current_buttons & (1 << BUTTON_A) and not last_buttons & (1 << BUTTON_A):
-                print("Button A is pressed")
-            if current_buttons & (1 << BUTTON_B) and not last_buttons & (1 << BUTTON_B):
-                print("Button B is pressed")
-            if current_buttons & (1 << BUTTON_X) and not last_buttons & (1 << BUTTON_X):
-                print("Button X is pressed")
-            if current_buttons & (1 << BUTTON_Y) and not last_buttons & (1 << BUTTON_Y):
-                print("Button Y is pressed")
-            if (current_buttons & (1 << BUTTON_START)) and not last_buttons & (1 << BUTTON_START):
-                print("Start button is pressed")
-            if (current_buttons & (1 << BUTTON_SELECT)) and not last_buttons & (1 << BUTTON_SELECT):
-                print("Select button is pressed")
-            last_buttons = current_buttons
+        # if current_buttons != last_buttons:
+        #     if (current_buttons & (1 << BUTTON_A)) and not (last_buttons & (1 << BUTTON_A)):
+        #         print("Button A is pressed")
+
+        #     if (current_buttons & (1 << BUTTON_B)) and not (last_buttons & (1 << BUTTON_B)):
+        #         print("Button B is pressed")
+
+        #     if (current_buttons & (1 << BUTTON_X)) and not (last_buttons & (1 << BUTTON_X)):
+        #         print("Button X is pressed")
+
+        #     if (current_buttons & (1 << BUTTON_Y)) and not (last_buttons & (1 << BUTTON_Y)):
+        #         print("Button Y is pressed")
+
+        #     if (current_buttons & (1 << BUTTON_START)) and not (last_buttons & (1 << BUTTON_START)):
+        #         print("Start button is pressed")
+
+        #     if (current_buttons & (1 << BUTTON_SELECT)) and not (last_buttons & (1 << BUTTON_SELECT)):
+        #         print("Select button is pressed")
+
+        #     last_buttons = current_buttons
+
 
         # Check if joystick position has changed significantly
         if abs(current_x - last_x) > joystick_threshold or abs(current_y - last_y) > joystick_threshold:
@@ -100,7 +107,7 @@ def main():
                 direction = None
             else:
                 if abs(dx) > abs(dy):
-                    direction = 'right' if dx > 0 else 'left'
+                    direction = 'left' if dx > 0 else 'right'
                 else:
                     direction = 'backward' if dy > 0 else 'forward'
 
@@ -123,10 +130,14 @@ def main():
                     # Send the mapped IR command
                     if cmd is not None:
                         transmitter.transmit(device_addr, cmd)
+                        print("transmitted command: {}".format(cmd))
                     last_direction = direction
             else:
                 if last_direction is not None:
-                    
+                    print("Stop - Joystick back to center - X: {}, Y: {}".format(current_x, current_y))
+
+                    transmitter.transmit(device_addr, STOP)
+                    print("transmitted command: {}".format(STOP))
                     # joystick is back to center
                     last_direction = None
 
