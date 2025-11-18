@@ -10,8 +10,8 @@ LED3 = Pin(18, Pin.OUT)
 
 
 # define IR command codes
-IR_FORWARD_CODE  = 0x01  
-IR_OFF_CODE = 0x02  
+IR_FORWARD_CODE  = 0x18  
+IR_OFF_CODE = 0x14  
 IR_BACKWARD_Code = 0x03
 
 # Function to blink all LEDs

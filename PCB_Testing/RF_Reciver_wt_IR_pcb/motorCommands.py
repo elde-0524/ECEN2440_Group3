@@ -14,8 +14,8 @@ class TwoMotorController:
         self.motor2_pin_en = motor2_pin_en
         self.motor2_pins_ph = motor2_pin_ph
 
-
-        pwm_rate = 2000  
+        self.pwm_rate = 2000
+        self.pwm_signal = min(max(int(2**16 * abs(1)), 0), 65535) 
 
         if 'pwm_signal' in kwargs:
             self.pwm_signal = kwargs['pwm_signal']
@@ -25,6 +25,7 @@ class TwoMotorController:
     
     def move_forward(self):
         """Move both motors forward."""
+        print("Both motors moving forward")
         self.motor1_pin_ph.low()
         self.motor2_pins_ph.low()
 
@@ -34,6 +35,7 @@ class TwoMotorController:
 
     def move_backward(self):
         """Move both motors backward."""
+        print("Both motors moving backward")
         self.motor1_pin_ph.high()
         self.motor2_pins_ph.high()
 
@@ -42,6 +44,7 @@ class TwoMotorController:
 
     def turn_right(self):
         """Turn right by moving left motor forward, right motor backward."""
+        print("Turning right")
         self.motor1_pin_ph.low()
         self.motor2_pins_ph.high()
 
@@ -50,6 +53,7 @@ class TwoMotorController:
 
     def turn_left(self):
         """Turn left by moving right motor forward, left motor backward."""
+        print("Turning left")
         self.motor1_pin_ph.high()
         self.motor2_pins_ph.low()
 

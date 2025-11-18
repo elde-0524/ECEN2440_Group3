@@ -17,20 +17,16 @@ LEFT_CODE     = 0x16
 RIGHT_CODE    = 0x15
 STOP_CODE     = 0x14    
 
-
-IR_OFF_CODE = 0x02  
-IR_BACKWARD_Code = 0x03
-
 last_time = 0
 signal1 = Pin(7, Pin.IN)
 signal2 = Pin(6, Pin.IN)
 signal3 = Pin(5, Pin.IN)
 signal4 = Pin(4, Pin.IN)    
 
-led1 = Pin(12, Pin.OUT)  
-led2 = Pin(13, Pin.OUT)
-led3 = Pin(14, Pin.OUT)
-led4 = Pin(15, Pin.OUT)
+led1 = Pin(0, Pin.OUT)  
+led2 = Pin(1, Pin.OUT)
+led3 = Pin(2, Pin.OUT)
+led4 = Pin(3, Pin.OUT)
 
 led1.value(0)
 led2.value(0)
@@ -43,6 +39,7 @@ RF_Operation_Mode = False
 
 def ir_callback_RF(pin):
     if not RF_Operation_Mode:
+        print("RF Operation Mode is disabled, ignoring RF commands.")
         return
 
     global last_time
@@ -79,11 +76,11 @@ def ir_callback_RF(pin):
 
 # Motor 1
 ain1_ph = Pin(12, Pin.OUT)
-ain2_en = PWM(Pin(13))
+ain2_en = PWM(Pin(13), freq= 2000)
 
 # Motor 2
 ain1_ph_2 = Pin(14, Pin.OUT)
-ain2_en_2 = PWM(Pin(15))
+ain2_en_2 = PWM(Pin(15), freq= 2000)
 
 
 motor_controller = TwoMotorController(ain2_en, ain1_ph, ain2_en_2, ain1_ph_2)
@@ -91,12 +88,13 @@ motor_controller = TwoMotorController(ain2_en, ain1_ph, ain2_en_2, ain1_ph_2)
 # Callback when IR command received
 def ir_callback(data, addr, _):
 
+    print(f"Received NEC command! Data: 0x{data:02X}, Addr: 0x{addr:02X}")
+
     if RF_Operation_Mode:
+        # print("RF Operation Mode is enabled, ignoring IR commands.")
         return
     
     # Print received command
-    print(f"Received NEC command! Data: 0x{data:02X}, Addr: 0x{addr:02X}")
-
     if data == FORWARD_CODE:
         motor_controller.move_forward()
     elif data == BACKWARD_CODE:
@@ -124,7 +122,7 @@ def blink_all_leds():
         time.sleep(0.2)
 
 # Setup the IR receiver
-ir_pin = Pin(11, Pin.IN, Pin.PULL_UP)  # adjust pin if needed
+ir_pin = Pin(18, Pin.IN, Pin.PULL_UP) 
 ir_receiver = NEC_8(ir_pin, callback=ir_callback)
 ir_receiver.error_function(print_error) 
 
