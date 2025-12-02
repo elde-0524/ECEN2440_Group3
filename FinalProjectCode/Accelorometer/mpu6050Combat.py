@@ -1,0 +1,96 @@
+import utime
+from mpu6050 import MPU6050
+
+
+class MPU6050Combat:
+    """
+    Simple collision detector for sumo robots.
+    Detects when you hit something and when you're stuck.
+    """
+
+    def __init__(self, mpu, forward_axis=0, blocked_threshold=-0.25, collision_threshold=1.8, cooldown_ms=200, collison_blocked = None,
+                 blocked_callback = None):
+
+        self.mpu = mpu
+        self.forward_axis = forward_axis
+        
+
+        self.collision_threshold = 1.8  # How hard of a hit counts as collision
+        self.blocked_threshold = -0.25   # How much slowing down = blocked
+        
+
+        self.prev_accel = 0.0
+        self.recent_accels = []  # Simple list to store recent readings
+        self.max_readings = 10   # Keep last 10 readings
+        
+
+        self.last_collision_time = 0
+        self.cooldown_ms = 200  # Wait 200ms between collision detections
+        self.block_check_duration_ms = 150 
+
+        self.blocked_callback = blocked_callback
+
+    def read_forward_accel(self):
+        return self.mpu.read_accel_data()[self.forward_axis]
+
+
+    def update(self):
+
+        # Read current acceleration
+        current_accel = self.read_forward_accel()
+        
+        # Calculate change (jerk)
+        jerk = current_accel - self.prev_accel
+        
+        self.recent_accels.append(current_accel)
+        
+        # remove old readings when list is greater than max size
+        if len(self.recent_accels) > self.max_readings:
+            self.recent_accels.pop(0)  # Remove oldest
+        
+        # check time difference
+        now = utime.ticks_ms()
+        time_since_last = utime.ticks_diff(now, self.last_collision_time)
+        
+        collision = False
+        blocked = False
+        self.check_for_block = False
+        
+       # ceck for collision
+        time_since_last = utime.ticks_diff(now, self.last_collision_time)
+        if jerk >= self.collision_threshold and time_since_last >= self.cooldown_ms:
+            collision = True
+            self.last_collision_time = now
+            self.check_for_block = True  
+
+            print(f"collison! Jerk number: {jerk}")
+        
+        # check for block
+        if self.check_for_block:
+            time_since_collision = utime.ticks_diff(now, self.last_collision_time)
+            
+            # Still within the checking window?
+            if time_since_collision < self.block_check_duration_ms:
+                if len(self.recent_accels) >= 3:
+                    average_accel = sum(self.recent_accels) / len(self.recent_accels)
+                    if average_accel <= self.blocked_threshold:
+                        
+                        if self.blocked_callback:
+                            self.blocked_callback()
+                            print("Calling blocked callback")
+
+                        self.check_for_block = False  # Stop checking
+                        self.recent_accels = []
+                        print(f"blocked! Average accel: {average_accel}")
+            else:
+                # if not declerating after some time then stop checking
+                self.check_for_block = False
+        
+        self.prev_accel = current_accel
+        
+
+    def reset(self):
+        # reset all s
+        self.prev_accel = 0.0
+        self.recent_accels = []
+        self.last_collision_time = 0
