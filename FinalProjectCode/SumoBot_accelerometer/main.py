@@ -201,3 +201,44 @@ while True:
         motor_active = False
         # update last_signal_time so stop isn't called repeatedly
         last_signal_time = utime.ticks_ms()
+
+#below is the battery checker code
+
+adc = ADC(Pin(28))
+led = Pin(20, Pin.OUT)
+MAX_READING = 65535
+VREF = 3.3
+
+PRINT_INTERVAL_MS = 5000
+last_print = time.ticks_ms()
+last_toggle = time.ticks_ms()
+led_state = False
+
+def set_led(on: bool):
+    led.value(1 if on else 0)
+
+print("Starting ADC reader on GPIO28; LED on GPIO20")
+while True:
+    raw = adc.read_u16()
+    voltage = (raw / MAX_READING) * VREF
+    percent = (raw / MAX_READING) * 100.0
+
+    if voltage > 0.4:
+        set_led(True)
+        blink_half_period_ms = None
+    elif voltage >= 0.2:
+        blink_half_period_ms = 500
+    else:
+        blink_half_period_ms = 250
+
+    now = time.ticks_ms()
+
+    if blink_half_period_ms is not None:
+        if time.ticks_diff(now, last_toggle) >= blink_half_period_ms:
+            led_state = not led_state
+            set_led(led_state)
+            last_toggle = now
+    else:
+        led_state = True
+
+    time.sleep(0.05)
