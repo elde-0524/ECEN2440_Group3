@@ -27,6 +27,10 @@ Motor 2:
   Phase: Pin 14
     Enable (PWM): Pin 15
 
+IR Receiver: Pin 18
+
+SCL: Pin 3 
+SDA: Pin 2
 '''
 
 # Example IR command values 
@@ -148,7 +152,7 @@ def ir_callback(data, addr, _):
 def block_callback():
     print("Collision detected!")
 
-    motor_controller.change_pwm_signal(int(65535/2))
+    motor_controller.change_pwm_signal(int(65535/3))
     motor_controller.move_forward()
 
 def unblock_callback():
@@ -157,7 +161,7 @@ def unblock_callback():
     motor_controller.change_pwm_signal(int(65535/5))
 
 # for accelerometer
-mpu6050 = MPU6050(I2C(0, scl=Pin(21), sda=Pin(20)))
+mpu6050 = MPU6050(I2C(1, scl=Pin(3), sda=Pin(2)))
 mpu6050_combat = MPU6050Combat(mpu6050, blocked_callback= block_callback, on_unblocked= unblock_callback)
 
 # Setup the IR receiver
@@ -193,6 +197,8 @@ button.irq(trigger=Pin.IRQ_RISING, handler=button_callback)
 
 while True:
     time.sleep(0.1)
+
+    mpu6050_combat.update()
 
     now = utime.ticks_ms()
     if motor_active and utime.ticks_diff(now, last_signal_time) > STOP_TIMEOUT_MS:

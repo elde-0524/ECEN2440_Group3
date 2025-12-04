@@ -1,5 +1,6 @@
 import machine
 from machine import Pin, PWM
+import utime
 
 class TwoMotorController:
     """
@@ -15,7 +16,7 @@ class TwoMotorController:
         self.motor2_pins_ph = motor2_pin_ph
 
         self.pwm_rate = 2000
-        self.pwm_signal_default = int(65535/5)  # 20% duty cycle
+        self.pwm_signal = int(65535/5)  # 20% duty cycle
 
         if 'pwm_signal' in kwargs:
             self.pwm_signal = kwargs['pwm_signal']
@@ -38,7 +39,7 @@ class TwoMotorController:
             for duty in range(0, self.pwm_signal, 1024):
                 self.motor1_pin_en.duty_u16(duty)
                 self.motor2_pin_en.duty_u16(duty)
-                machine.SLEEP(50)
+                utime.sleep_ms(50)
         else:
             self.motor1_pin_en.duty_u16(self.pwm_signal)
             self.motor2_pin_en.duty_u16(self.pwm_signal)
@@ -54,7 +55,7 @@ class TwoMotorController:
             for duty in range(0, self.pwm_signal, 1024):
                 self.motor1_pin_en.duty_u16(duty)
                 self.motor2_pin_en.duty_u16(duty)
-                machine.SLEEP(50)
+                utime.sleep_ms(50)
             else:
                 self.motor1_pin_en.duty_u16(self.pwm_signal)
                 self.motor2_pin_en.duty_u16(self.pwm_signal)    
@@ -69,7 +70,7 @@ class TwoMotorController:
             for duty in range(0, self.pwm_signal, 1024):
                 self.motor1_pin_en.duty_u16(duty)
                 self.motor2_pin_en.duty_u16(duty)
-                machine.SLEEP(50)
+                utime.sleep_ms(50)
         else:
             self.motor1_pin_en.duty_u16(self.pwm_signal)
             self.motor2_pin_en.duty_u16(self.pwm_signal) 
@@ -84,7 +85,7 @@ class TwoMotorController:
             for duty in range(0, self.pwm_signal, 1024):
                 self.motor1_pin_en.duty_u16(duty)
                 self.motor2_pin_en.duty_u16(duty)
-                machine.SLEEP(50)
+                utime.sleep_ms(50)
         else:
             self.motor1_pin_en.duty_u16(self.pwm_signal)
             self.motor2_pin_en.duty_u16(self.pwm_signal) 

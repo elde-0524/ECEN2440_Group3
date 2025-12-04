@@ -15,13 +15,13 @@ class MPU6050Combat:
         self.forward_axis = forward_axis
         
 
-        self.collision_threshold = 1.8  # How hard of a hit counts as collision
-        self.blocked_threshold = -0.25   # How much slowing down = blocked
+        self.collision_threshold = 1.8  
+        self.blocked_threshold = -0.25  
         
 
         self.prev_accel = 0.0
-        self.recent_accels = []  # Simple list to store recent readings
-        self.max_readings = 10   # Keep last 10 readings
+        self.recent_accels = [] # store readings
+        self.max_readings = 10  # keep a window of 10
         
 
         self.last_collision_time = 0
@@ -37,18 +37,18 @@ class MPU6050Combat:
 
 
     def update(self):
-
-        # Read current acceleration
+        
+        print("Updating collision detection")
         current_accel = self.read_forward_accel()
         
-        # Calculate change (jerk)
+        # calculate delta acceleration
         jerk = current_accel - self.prev_accel
         
         self.recent_accels.append(current_accel)
         
         # remove old readings when list is greater than max size
         if len(self.recent_accels) > self.max_readings:
-            self.recent_accels.pop(0)  # Remove oldest
+            self.recent_accels.pop(0)  # keep window
         
         # check time difference
         now = utime.ticks_ms()
@@ -57,12 +57,15 @@ class MPU6050Combat:
         collision = False
         blocked = False
         self.on_unblocked = None
+        self.was_blocked = False
+        self.check_for_block = False
+
 
         if self.was_blocked:
                     if len(self.recent_accels) >= 3:
                         average_accel = sum(self.recent_accels) / len(self.recent_accels)
-                        # If acceleration is positive again, we're moving!
-                        if average_accel > 0.3:  # Threshold for "unblocked"
+                        # if acceleration is going up then we are moving
+                        if average_accel > 0.3  :  
                             print(f"unblocked! Average accel: {average_accel}")
                             self.was_blocked = False
                             if self.on_unblocked:
@@ -85,7 +88,7 @@ class MPU6050Combat:
         if self.check_for_block:
             time_since_collision = utime.ticks_diff(now, self.last_collision_time)
             
-            # Still within the checking window?
+            # check if we are still in the block check duration
             if time_since_collision < self.block_check_duration_ms:
                 if len(self.recent_accels) >= 3:
                     average_accel = sum(self.recent_accels) / len(self.recent_accels)
@@ -96,7 +99,7 @@ class MPU6050Combat:
                             print("Calling blocked callback")
 
                         self.was_blocked = True 
-                        self.check_for_block = False  # Stop checking
+                        self.check_for_block = False  
                         self.recent_accels = []
                         print(f"blocked! Average accel: {average_accel}")
             else:
