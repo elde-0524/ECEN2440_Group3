@@ -1,10 +1,12 @@
-from machine import Pin, PWM, I2C
+from machine import Pin, PWM, I2C, ADC
 import time
 import utime
 
 from motorCommands import TwoMotorController
 from mpu6050 import MPU6050
 from mpu6050Combat import MPU6050Combat
+
+
 
 from ir_rx.nec import NEC_8
 from ir_rx.print_error import print_error
@@ -33,6 +35,14 @@ signal4 = Pin(4, Pin.IN)
 led1_slow = Pin(16, Pin.OUT)
 led2_normal = Pin(17, Pin.OUT)
 led3_fast = Pin(20, Pin.OUT)
+
+# for battery level indication
+led4_battery = Pin(19, Pin.OUT)
+adc = ADC(Pin(28))
+MAX_READING = 65535
+VREF = 3.3
+PRINT_INTERVAL_MS = 5000
+
 
 led2_normal.high()
 led1_slow.low()
@@ -76,6 +86,35 @@ def wake_mpu(i2c, addr=0x68):
     except:
         print("MPU wake failed")
 
+def set_led(on: bool):
+    led4_battery.value(1 if on else 0)
+
+def ADC_reader():
+    last_print = time.ticks_ms()
+    last_toggle = time.ticks_ms()
+    led_state = False
+
+    raw = adc.read_u16()
+    voltage = (raw / MAX_READING) * VREF
+    percent = (raw / MAX_READING) * 100.0
+
+    if voltage > 0.4:
+        set_led(True)
+        blink_half_period_ms = None
+    elif voltage >= 0.2:
+        blink_half_period_ms = 500
+    else:
+        blink_half_period_ms = 250
+
+    now = time.ticks_ms()
+
+    if blink_half_period_ms is not None:
+        if time.ticks_diff(now, last_toggle) >= blink_half_period_ms:
+            led_state = not led_state
+            set_led(led_state)
+            last_toggle = now
+    else:
+        led_state = True
 
 def apply_mode_pwm():
     """Set motor PWM based on current mode."""
@@ -233,6 +272,8 @@ print("initialization complete!")
 while True:
     time.sleep(0.1)
 
+    ADC_reader()
+
     mpu_combat.update()
 
     now = utime.ticks_ms()
@@ -240,5 +281,15 @@ while True:
         motor_controller.stop()
         motor_active = False
         last_signal_time = now
+
+
+
+
+
+
+
+
+
+
 
 
