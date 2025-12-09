@@ -138,7 +138,7 @@ class Seesaw:
     except OverflowError:
       buf[0] = buf[0] & 0x3F
       ret = struct.unpack(">I", buf)[0]
-      return ret & pins
+    return ret & pins
 
 
   def analog_read(self, pin, delay=0.008):

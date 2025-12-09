@@ -22,6 +22,7 @@ BACKWARD = 0x17
 LEFT = 0x16
 RIGHT = 0x15
 STOP = 0x14
+MODE_SWITCH = 0x19
 
 
 commands = [FORWARD, BACKWARD, LEFT, RIGHT]
@@ -73,26 +74,13 @@ def main():
         current_x, current_y = read_joystick()
 
         # Check if button state has changed
-        # if current_buttons != last_buttons:
-        #     if (current_buttons & (1 << BUTTON_A)) and not (last_buttons & (1 << BUTTON_A)):
-        #         print("Button A is pressed")
+        if current_buttons != last_buttons:
+            if (current_buttons & (1 << BUTTON_B)) and not (last_buttons & (1 << BUTTON_B)):
+                transmitter.transmit(device_addr, MODE_SWITCH)
+                print("Button B is pressed")
+                print("transmitted command: {}".format(MODE_SWITCH))
 
-        #     if (current_buttons & (1 << BUTTON_B)) and not (last_buttons & (1 << BUTTON_B)):
-        #         print("Button B is pressed")
-
-        #     if (current_buttons & (1 << BUTTON_X)) and not (last_buttons & (1 << BUTTON_X)):
-        #         print("Button X is pressed")
-
-        #     if (current_buttons & (1 << BUTTON_Y)) and not (last_buttons & (1 << BUTTON_Y)):
-        #         print("Button Y is pressed")
-
-        #     if (current_buttons & (1 << BUTTON_START)) and not (last_buttons & (1 << BUTTON_START)):
-        #         print("Start button is pressed")
-
-        #     if (current_buttons & (1 << BUTTON_SELECT)) and not (last_buttons & (1 << BUTTON_SELECT)):
-        #         print("Select button is pressed")
-
-        #     last_buttons = current_buttons
+            last_buttons = current_buttons
 
 
         # Check if joystick position has changed significantly

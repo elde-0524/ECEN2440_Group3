@@ -4,7 +4,7 @@ from mpu6050 import MPU6050
 
 class MPU6050Combat:
     def __init__(self, mpu, forward_axis=0, blocked_threshold=-0.25, 
-                 collision_threshold=1.5, cooldown_ms=200, 
+                 collision_threshold = 1.0, cooldown_ms=200, 
                  collison_callback=None, blocked_callback=None, on_unblocked=None):
 
         self.mpu = mpu
@@ -32,9 +32,11 @@ class MPU6050Combat:
 
     def read_forward_accel(self):
         return self.mpu.read_accel_data()[self.forward_axis]
+    
     def update(self):
         current_accel = self.read_forward_accel()
         jerk = current_accel - self.prev_accel
+
         print(jerk)
 
         self.recent_accels.append(current_accel)
@@ -46,7 +48,8 @@ class MPU6050Combat:
         # Check for unblocking FIRST (before new collision detection)
         if self.was_blocked and len(self.recent_accels) >= 3:
             average_accel = sum(self.recent_accels) / len(self.recent_accels)
-            if average_accel > 0.3:
+            print(f"Average accel for unblocking check: {average_accel}")
+            if abs(average_accel) > 0.5:
                 print(f"Unblocked! Average accel: {average_accel}")
                 self.was_blocked = False
                 if self.on_unblocked:

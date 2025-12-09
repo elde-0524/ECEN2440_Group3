@@ -31,6 +31,11 @@ IR Receiver: Pin 18
 
 SCL: Pin 3 
 SDA: Pin 2
+
+led1 (slow mode): Pin 16
+led2 (normal mode): Pin 17
+led3 (fast mode): Pin 20
+
 '''
 
 # Example IR command values 
@@ -39,8 +44,10 @@ BACKWARD_CODE = 0x17
 LEFT_CODE     = 0x16
 RIGHT_CODE    = 0x15
 STOP_CODE     = 0x14    
+MODE_SWITCH   = 0x19
 
 last_time = 0
+mode = 'normal'  # default mode
 # Timestamp of the last received valid command (IR or RF)
 last_signal_time = utime.ticks_ms()
 
@@ -50,7 +57,12 @@ STOP_TIMEOUT_MS = 3000  # 3 seconds by default; tweak as needed
 signal1 = Pin(7, Pin.IN)
 signal2 = Pin(6, Pin.IN)
 signal3 = Pin(5, Pin.IN)
-signal4 = Pin(4, Pin.IN)    
+signal4 = Pin(4, Pin.IN)  
+
+
+led1_slow = Pin(16, Pin.OUT)
+led2_normal = Pin(17, Pin.OUT)
+led3_fast = Pin(20, Pin.OUT)
 
 button = Pin(28, Pin.IN, Pin.PULL_UP)    
 
@@ -124,14 +136,14 @@ def ir_callback(data, addr, _):
     
     # Print received command
     if data == FORWARD_CODE:
-        motor_controller.move_forward()
+        motor_controller.move_forward(mode = 'normal')
         # mark motors active and update last-signal timestamp
         global last_signal_time
         global motor_active
         motor_active = True
         last_signal_time = utime.ticks_ms()
     elif data == BACKWARD_CODE:
-        motor_controller.move_backward()
+        motor_controller.move_backward(mode = 'normal')
         motor_active = True
         last_signal_time = utime.ticks_ms()
     elif data == LEFT_CODE:
@@ -146,8 +158,29 @@ def ir_callback(data, addr, _):
         motor_controller.stop()
         motor_active = False
         last_signal_time = utime.ticks_ms()
+    elif data == MODE_SWITCH:
+        global mode
+        if mode == 'slow':
+            mode = 'normal'
+            led2_normal.high()
+            led1_slow.low()
+            led3_fast.low()
+            print("Switched to NORMAL mode")
+        elif mode == 'normal':
+            mode = 'fast'
+            led3_fast.high()
+            led1_slow.low()
+            led2_normal.low()
+            print("Switched to FAST mode")
+        elif mode == 'fast':
+            mode = 'slow'
+            led1_slow.high()
+            led2_normal.low()
+            led3_fast.low()
+            print("Switched to SLOW mode")
     else: 
         print("Unknown command")
+    
 
 def block_callback():
     print("Collision detected!")
@@ -164,11 +197,14 @@ def unblock_callback():
 mpu6050 = MPU6050(I2C(1, scl=Pin(3), sda=Pin(2)))
 mpu6050_combat = MPU6050Combat(mpu6050, blocked_callback= block_callback, on_unblocked= unblock_callback)
 
+time.sleep(0.5) # Allow time for setup
+
 # Setup the IR receiver
 ir_pin = Pin(18, Pin.IN, Pin.PULL_UP) 
 ir_receiver = NEC_8(ir_pin, callback=ir_callback)
 ir_receiver.error_function(print_error) 
 
+time.sleep(0.5)  # Allow time for IR receiver to initialize
 
 def button_callback(pin):
     global RF_Operation_Mode
@@ -199,7 +235,6 @@ while True:
     time.sleep(0.1)
 
     mpu6050_combat.update()
-
     now = utime.ticks_ms()
     if motor_active and utime.ticks_diff(now, last_signal_time) > STOP_TIMEOUT_MS:
         print("No signal received for timeout period — stopping motors")
@@ -210,41 +245,41 @@ while True:
 
 #below is the battery checker code
 
-adc = ADC(Pin(28))
-led = Pin(20, Pin.OUT)
-MAX_READING = 65535
-VREF = 3.3
+# adc = ADC(Pin(28))
+# led = Pin(20, Pin.OUT)
+# MAX_READING = 65535
+# VREF = 3.3
 
-PRINT_INTERVAL_MS = 5000
-last_print = time.ticks_ms()
-last_toggle = time.ticks_ms()
-led_state = False
+# PRINT_INTERVAL_MS = 5000
+# last_print = time.ticks_ms()
+# last_toggle = time.ticks_ms()
+# led_state = False
 
-def set_led(on: bool):
-    led.value(1 if on else 0)
+# def set_led(on: bool):
+#     led.value(1 if on else 0)
 
-print("Starting ADC reader on GPIO28; LED on GPIO20")
-while True:
-    raw = adc.read_u16()
-    voltage = (raw / MAX_READING) * VREF
-    percent = (raw / MAX_READING) * 100.0
+# print("Starting ADC reader on GPIO28; LED on GPIO20")
+# while True:
+#     raw = adc.read_u16()
+#     voltage = (raw / MAX_READING) * VREF
+#     percent = (raw / MAX_READING) * 100.0
 
-    if voltage > 0.4:
-        set_led(True)
-        blink_half_period_ms = None
-    elif voltage >= 0.2:
-        blink_half_period_ms = 500
-    else:
-        blink_half_period_ms = 250
+#     if voltage > 0.4:
+#         set_led(True)
+#         blink_half_period_ms = None
+#     elif voltage >= 0.2:
+#         blink_half_period_ms = 500
+#     else:
+#         blink_half_period_ms = 250
 
-    now = time.ticks_ms()
+#     now = time.ticks_ms()
 
-    if blink_half_period_ms is not None:
-        if time.ticks_diff(now, last_toggle) >= blink_half_period_ms:
-            led_state = not led_state
-            set_led(led_state)
-            last_toggle = now
-    else:
-        led_state = True
+#     if blink_half_period_ms is not None:
+#         if time.ticks_diff(now, last_toggle) >= blink_half_period_ms:
+#             led_state = not led_state
+#             set_led(led_state)
+#             last_toggle = now
+#     else:
+#         led_state = True
 
-    time.sleep(0.05)
+#     time.sleep(0.05)
