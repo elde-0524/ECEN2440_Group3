@@ -245,10 +245,10 @@ while True:
 
 #below is the battery checker code
 
-# adc = ADC(Pin(28))
-# led = Pin(20, Pin.OUT)
-# MAX_READING = 65535
-# VREF = 3.3
+adc = ADC(Pin(28))
+led = Pin(19, Pin.OUT)
+MAX_READING = 65535
+VREF = 3.3
 
 # PRINT_INTERVAL_MS = 5000
 # last_print = time.ticks_ms()
